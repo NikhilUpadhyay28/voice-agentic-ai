@@ -12,31 +12,32 @@ def home():
 
 @app.route("/process", methods=["POST"])
 def process():
+    import uuid, os
     from speech import speech_to_text, text_to_speech
     from agent import run_agent
-    import uuid, os
 
     audio = request.files["audio"]
-    lang = request.form["language"]
+    lang = request.form.get("language", "hi-IN")
 
     input_path = f"temp/{uuid.uuid4()}.webm"
     audio.save(input_path)
-    print("Saved input audio:", input_path)
 
     user_text = speech_to_text(input_path, lang)
-    print("STT OUTPUT:", user_text)
 
     if not user_text:
-        reply = "मैं आपकी आवाज़ समझ नहीं पाया"
+        reply = {
+            "hi-IN": "मैं आपकी आवाज़ समझ नहीं पाया",
+            "bn-IN": "আমি আপনার কথা বুঝতে পারিনি",
+            "or-IN": "ମୁଁ ଆପଣଙ୍କ କଥା ବୁଝିପାରିଲି ନାହିଁ"
+        }.get(lang, "कृपया पुनः बोलें")
     else:
         reply = run_agent(user_text, lang)
 
     output_path = f"temp/{uuid.uuid4()}.mp3"
-    print("Generating TTS at:", output_path)
-
     text_to_speech(reply, lang, output_path)
 
-    print("Checking file exists:", os.path.exists(output_path))
+    if not os.path.exists(output_path):
+        return "Audio generation failed", 500
 
     return send_file(output_path, mimetype="audio/mpeg")
 

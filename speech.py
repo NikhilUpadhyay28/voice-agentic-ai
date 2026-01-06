@@ -33,11 +33,22 @@ def speech_to_text(audio_path, lang_code):
 def text_to_speech(text, lang_code, out_path):
     from gtts import gTTS
 
-    print("TTS INPUT TEXT:", text)
-    print("TTS OUTPUT PATH:", out_path)
+    if not text or len(text.strip()) == 0:
+        text = "मैं आपकी सहायता के लिए यहाँ हूँ"
 
-    # FORCE Hindi first (we'll add others after it works)
-    tts = gTTS(text=text, lang="hi")
-    tts.save(out_path)
+    # Proper language mapping
+    lang_map = {
+        "hi-IN": "hi",
+        "bn-IN": "bn",
+        "or-IN": "or"
+    }
 
-    print("TTS SAVED SUCCESSFULLY")
+    tts_lang = lang_map.get(lang_code, "hi")
+
+    try:
+        # Primary attempt: native voice
+        gTTS(text=text, lang=tts_lang).save(out_path)
+    except Exception as e:
+        # Fallback (never fail silently)
+        print("TTS failed for", tts_lang, "falling back to Hindi")
+        gTTS(text=text, lang="hi").save(out_path)
