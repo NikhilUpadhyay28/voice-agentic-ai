@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Scheme Agent</title>
+</head>
+<body>
+
+<h2>Voice-based Government Scheme Assistant</h2>
+
+<select id="lang">
+  <option value="hi-IN">Hindi</option>
+  <option value="bn-IN">Bengali</option>
+  <option value="or-IN">Odia</option>
+</select>
+
+<button onclick="record()">🎤 Speak</button>
+<audio id="audio" controls></audio>
+
+<script>
+let recorder, audioChunks = [];
+
+async function record() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  recorder = new MediaRecorder(stream);
+
+  recorder.start();
+  audioChunks = [];
+
+  recorder.ondataavailable = e => audioChunks.push(e.data);
+
+  setTimeout(() => {
+    recorder.stop();
+  }, 5000);
+
+  recorder.onstop = async () => {
+    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+    const data = new FormData();
+    data.append("audio", blob);
+    data.append("language", document.getElementById("lang").value);
+
+    const res = await fetch("/process", { method: "POST", body: data });
+    const audioBlob = await res.blob();
+
+    const audioURL = URL.createObjectURL(audioBlob);
+    document.getElementById("audio").src = audioURL;
+  };
+}
+</script>
+
+</body>
+</html>

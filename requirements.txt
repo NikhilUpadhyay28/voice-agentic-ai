@@ -1,0 +1,7 @@
+flask
+speechrecognition
+pydub
+gtts
+langchain
+openai
+python-dotenv
